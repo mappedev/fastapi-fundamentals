@@ -5,7 +5,7 @@ from typing import Optional
 from pydantic import BaseModel
 
 ''' FastAPI imports '''
-from fastapi import Body, FastAPI, Query
+from fastapi import Body, FastAPI, Query, Path
 
 app = FastAPI()
 
@@ -39,10 +39,22 @@ def get_persons(
         description= 'Person name (Mario)',
     ),
     age: int = Query(
-        ..., # required
+        default=..., # required
         ge=0,
         title='Person age',
-        description='Person age (21)',
+        description='Person age (21), It is required!',
     ),
 ):
     return {name: age}
+
+''' Validations path parameters'''
+@app.get('/persons/{person_id}')
+def get_person(
+    person_id: int = Path(
+        default=...,
+        ge=1,
+        title='Person ID',
+        description='Person ID (1), It is required!'
+    ),
+):
+    return {person_id: 'It exists!'}
