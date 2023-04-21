@@ -6,7 +6,7 @@ from enum import Enum
 from pydantic import BaseModel, EmailStr, Field, HttpUrl, PaymentCardNumber
 
 ''' FastAPI imports '''
-from fastapi import Body, FastAPI, Query, Path, status
+from fastapi import Body, FastAPI, Form, Query, Path, status
 
 app = FastAPI()
 
@@ -117,6 +117,36 @@ class Location(BaseModel):
     #     }
 
 
+class LoginBase(BaseModel):
+    username: str = Field(
+        default=...,
+        min_length=1,
+        max_length=20,
+        title='Username',
+        description='Username (mappedev)',
+        example='mappedev',
+    )
+
+
+class Login(LoginBase):
+    password: str = Field(
+        default=...,
+        min_length=8,
+        title='Password',
+        description='Password (12345678)',
+        example='12345678',
+    )
+
+
+class LoginOut(LoginBase):
+    message: str = Field(
+        default='Login successfully!',
+        title='Login message',
+        description='Login message (Login successfully!)',
+        example='Login successfully!',
+    )
+
+
 @app.get(
     path='/',
     status_code=status.HTTP_200_OK,
@@ -196,3 +226,27 @@ def update_person(
     results = person.dict()
     results.update(location.dict())
     return results
+
+@app.post(
+    path='/login',
+    response_model=LoginOut,
+    status_code=status.HTTP_200_OK,
+)
+def login(
+    username: str = Form(
+        default=...,
+        min_length=1,
+        max_length=20,
+        title='Username',
+        description='Username (mappedev)',
+        example='mappedev',
+    ),
+    password: str = Form(
+        default=...,
+        min_length=8,
+        title='Password',
+        description='Password (12345678)',
+        example='12345678',
+    )
+):
+    return LoginOut(username=username)
