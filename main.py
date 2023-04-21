@@ -123,12 +123,14 @@ def get_persons(
         max_length=50,
         title='Person name',
         description= 'Person name (Mario)',
+        example='Mario',
     ),
     age: int = Query(
         default=..., # required
         ge=0,
         title='Person age',
         description='Person age (21), It is required!',
+        example=26,
     ),
 ):
     return {name: age}
@@ -140,7 +142,8 @@ def get_person(
         default=...,
         ge=1,
         title='Person ID',
-        description='Person ID (1), It is required!'
+        description='Person ID (1), It is required!',
+        example=1,
     ),
 ):
     return {person_id: 'It exists!'}
@@ -153,6 +156,7 @@ def update_person(
         ge=1,
         title='Person ID',
         description='Person ID (1), It is required!',
+        example=1,
     ),
     person: Person = Body(default=...),
     location: Location = Body(default=...),
