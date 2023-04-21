@@ -20,7 +20,7 @@ class HairColor(Enum):
     red = 'red'
 
 
-class Person(BaseModel):
+class PersonOut(BaseModel):
     ''' Clasic types '''
     first_name: str = Field(
         default=...,
@@ -76,6 +76,14 @@ class Person(BaseModel):
     #     }
 
 
+class Person(PersonOut):
+    password: str = Field(
+        default=...,
+        min_length=8,
+        example='12345678',
+    )
+
+
 class Location(BaseModel):
     city: str = Field(
         default=...,
@@ -110,8 +118,14 @@ def home():
     return {'Hello': 'World'}
 
 ''' Request and response body '''
-@app.post('/persons')
-def create_person(person: Person = Body(...)):
+@app.post(
+    '/persons',
+    response_model=PersonOut,
+    # response_model=Person,
+    # response_model_exclude={'password'}
+    # Puedes usar las dos anteriores, pero en la documentación te indicará que devolverá la contraseña por el response_model de Person
+)
+def create_person(person: Person = Body(...)) -> PersonOut:
     return person
 
 ''' Validations query parameters '''
