@@ -20,7 +20,7 @@ class HairColor(Enum):
     red = 'red'
 
 
-class PersonOut(BaseModel):
+class PersonBase(BaseModel):
     ''' Clasic types '''
     first_name: str = Field(
         default=...,
@@ -76,12 +76,16 @@ class PersonOut(BaseModel):
     #     }
 
 
-class Person(PersonOut):
+class Person(PersonBase):
     password: str = Field(
         default=...,
         min_length=8,
         example='12345678',
     )
+
+
+class PersonOut(PersonBase):
+    pass
 
 
 class Location(BaseModel):
