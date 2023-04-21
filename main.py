@@ -6,7 +6,7 @@ from enum import Enum
 from pydantic import BaseModel, EmailStr, Field, HttpUrl, PaymentCardNumber
 
 ''' FastAPI imports '''
-from fastapi import Body, FastAPI, Query, Path
+from fastapi import Body, FastAPI, Query, Path, status
 
 app = FastAPI()
 
@@ -117,23 +117,30 @@ class Location(BaseModel):
     #     }
 
 
-@app.get('/')
+@app.get(
+    path='/',
+    status_code=status.HTTP_200_OK,
+)
 def home():
     return {'Hello': 'World'}
 
 ''' Request and response body '''
 @app.post(
-    '/persons',
+    path='/persons',
     response_model=PersonOut,
     # response_model=Person,
     # response_model_exclude={'password'}
     # Puedes usar las dos anteriores, pero en la documentación te indicará que devolverá la contraseña por el response_model de Person
+    status_code=status.HTTP_201_CREATED,
 )
 def create_person(person: Person = Body(...)) -> PersonOut:
     return person
 
 ''' Validations query parameters '''
-@app.get('/persons')
+@app.get(
+    path='/persons',
+    status_code=status.HTTP_200_OK,
+)
 def get_persons(
     name: Optional[str] = Query(
         default='Anonymous',
@@ -154,7 +161,10 @@ def get_persons(
     return {name: age}
 
 ''' Validations path parameters'''
-@app.get('/persons/{person_id}')
+@app.get(
+    path='/persons/{person_id}',
+    status_code=status.HTTP_200_OK,
+)
 def get_person(
     person_id: int = Path(
         default=...,
@@ -167,7 +177,10 @@ def get_person(
     return {person_id: 'It exists!'}
 
 ''' Validations request body and validations models '''
-@app.put('/persons/{person_id}')
+@app.put(
+    path='/persons/{person_id}',
+    status_code=status.HTTP_200_OK,
+)
 def update_person(
     person_id: int = Path(
         default=...,
