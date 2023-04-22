@@ -211,6 +211,7 @@ def create_person(person: Person = Body(...)) -> PersonOut: # Si el path operati
     tags=[Tags.persons],
     summary='Get persons in the app',
     # description='HI FIVE!', # No lo coloque si tienes un DocString que describa el path operation function
+    deprecated=True,
 )
 def get_persons(
     name: str | None = Query(
