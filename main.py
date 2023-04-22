@@ -1,5 +1,4 @@
 ''' Python imports '''
-from typing import Optional
 from enum import Enum
 
 ''' Pydantic imports '''
@@ -17,6 +16,13 @@ app = FastAPI()
 
 
 ''' Models '''
+class Tags(Enum):
+    home = 'Home'
+    persons = 'Persons'
+    contacts = 'Contacts'
+    files = 'Files'
+
+
 class HairColor(Enum):
     white = 'white'
     brown = 'brown'
@@ -45,7 +51,7 @@ class PersonBase(BaseModel):
         le=115,
         example=26
     )
-    is_married: Optional[bool] = Field(
+    is_married: bool | None = Field(
         default=False,
         example=False,
     )
@@ -54,15 +60,15 @@ class PersonBase(BaseModel):
         default=...,
         example='user@email.com',
     )
-    hair_color: Optional[HairColor] = Field(
+    hair_color: HairColor | None = Field(
         default=None,
         example='black',
     )
-    website_url: Optional[HttpUrl] = Field(
+    website_url: HttpUrl | None = Field(
         default=None,
         example='https://mappedev.com',
     )
-    credit_card: Optional[PaymentCardNumber] = Field(
+    credit_card: PaymentCardNumber | None = Field(
         default=None,
         example='5555555555554444',
     )
@@ -122,6 +128,10 @@ class Location(BaseModel):
     #     }
 
 
+class PersonLocationOut(PersonOut, Location):
+    pass
+
+
 class LoginBase(BaseModel):
     username: str = Field(
         default=...,
@@ -152,27 +162,58 @@ class LoginOut(LoginBase):
     )
 
 
-@app.get(path='/', status_code=status.HTTP_200_OK, tags=['Home'])
-def home():
+@app.get(
+    path='/',
+    status_code=status.HTTP_200_OK,
+    tags=[Tags.home],
+    summary='Home',
+)
+def home() -> dict[str, str]:
+    '''
+    ## Home endpoint
+    '''
     return {'Hello': 'World'}
 
 ''' Request and response body '''
 @app.post(
     path='/persons',
-    response_model=PersonOut,
+    # response_model=PersonOut, # Si el path operation function tiene un return hint, no hace falta
     # response_model=Person,
     # response_model_exclude={'password'}
     # Puedes usar las dos anteriores, pero en la documentación te indicará que devolverá la contraseña por el response_model de Person
     status_code=status.HTTP_201_CREATED,
-    tags=['Persons'] # Permite agrupar el endpoint en tags en la documentación
+    tags=[Tags.persons], # Permite agrupar el endpoint en tags en la documentación
+    summary='Create Person in the app', # Título personalizado para el path operation function
 )
-def create_person(person: Person = Body(...)) -> PersonOut:
+def create_person(person: Person = Body(...)) -> PersonOut: # Si el path operation decorator tiene un response_model, o hace falta indicar el return hint
+    # Docstring:
+    # Title
+    # Description
+    # Parameters
+    # Result
+    '''
+    ## Create Person
+
+    This path operation creates a person in the app and save the information in the database.
+
+    Parameters:
+    - Request body parameters
+        - **person: Person** -> A person model with first name, last name, age, email and password as a minimum.
+    
+    Returns a person out model with first name, last name, age, and email, marital status, hair color, website url and credit card.
+    '''
     return person
 
 ''' Validations query parameters '''
-@app.get(path='/persons', status_code=status.HTTP_200_OK, tags=['Persons'])
+@app.get(
+    path='/persons',
+    status_code=status.HTTP_200_OK,
+    tags=[Tags.persons],
+    summary='Get persons in the app',
+    # description='HI FIVE!', # No lo coloque si tienes un DocString que describa el path operation function
+)
 def get_persons(
-    name: Optional[str] = Query(
+    name: str | None = Query(
         default='Anonymous',
         min_length=1,
         max_length=50,
@@ -187,7 +228,19 @@ def get_persons(
         description='Person age (21), It is required!',
         example=26,
     ),
-):
+) -> dict[str, int]:
+    '''
+    ## Get persons
+
+    This path operation gets multiples persons in the app.
+
+    Parameters:
+    - Query parameters
+        - **age: int** -> Greather and equal than 0.
+        - name: str -> [1..50] characters and by default is Anonymous.
+    
+    Returns a JSON with the name as a key and the age as a value.
+    '''
     return {name: age}
 
 persons = [1, 2, 3, 4, 5]
@@ -196,7 +249,8 @@ persons = [1, 2, 3, 4, 5]
 @app.get(
     path='/persons/{person_id}',
     status_code=status.HTTP_200_OK,
-    tags=['Persons'],
+    tags=[Tags.persons],
+    summary='Get a person in the app',
 )
 def get_person(
     person_id: int = Path(
@@ -206,7 +260,18 @@ def get_person(
         description='Person ID (1), It is required!',
         example=1,
     ),
-):
+) -> dict[str, int]:
+    '''
+    ## Get a person
+
+    This path operation gets a person in the app.
+
+    Parameters:
+    - Path parameters
+        - **person_id: int** -> Greather and equal than 1.
+    
+    Returns a JSON with the person_id as a key and "It exists!" as a value if the person exists in the database.
+    '''
     if person_id not in persons:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -218,7 +283,8 @@ def get_person(
 @app.put(
     path='/persons/{person_id}',
     status_code=status.HTTP_200_OK,
-    tags=['Persons'],
+    tags=[Tags.persons],
+    summary='Update a person in the app',
 )
 def update_person(
     person_id: int = Path(
@@ -230,8 +296,23 @@ def update_person(
     ),
     person: Person = Body(default=...),
     location: Location = Body(default=...),
-):
+) -> PersonLocationOut:
+    '''
+    ## Update a person
+
+    This path operation updates a person in the app.
+
+    Parameters:
+    - Request body parameters
+        - **person: Person** -> A person model with first name, last name, age, email and password as a minimum.
+        - **location: Location** -> A location model with country, city and state.
+    - Path parameters
+        - **person_id: int** -> Greather and equal than 1.
+    
+    Returns a JSON with the person location out model.
+    '''
     # return person.dict() & location.dict()
+    # results = PersonOut(**person.dict()).dict()
     results = person.dict()
     results.update(location.dict())
     return results
@@ -239,9 +320,9 @@ def update_person(
 ''' Form Data parameters '''
 @app.post(
     path='/login',
-    response_model=LoginOut,
     status_code=status.HTTP_200_OK,
-    tags=['Persons']
+    tags=[Tags.persons],
+    summary='Login a person in the app',
 )
 def login(
     username: str = Form(
@@ -259,11 +340,28 @@ def login(
         description='Password (12345678)',
         example='12345678',
     )
-):
+) -> LoginOut:
+    '''
+    ## Login a person
+
+    This path operation logins a person in the app.
+
+    Parameters:
+    - Request form parameters
+        - **username: str** -> [1..20] A username to login.
+        - **password: str** -> [8..255] A password to login.
+    
+    Returns a JSON with the login out model.
+    '''
     return LoginOut(username=username)
 
 ''' Cookies and Headers parameters'''
-@app.post(path='/contact', status_code=status.HTTP_200_OK, tags=['Contact'])
+@app.post(
+    path='/contact',
+    status_code=status.HTTP_200_OK,
+    tags=[Tags.contacts],
+    summary='Contact the company',
+)
 def contact(
     first_name: str = Form(
         default=...,
@@ -283,17 +381,58 @@ def contact(
     ),
     email: EmailStr = Form(default=...),
     message: str = Form(default=..., min_length=20),
-    user_agent: Optional[str] = Header(default=None),
-    ads: Optional[str] = Cookie(default=None),
-):
+    user_agent: str | None = Header(default=None),
+    ads: str | None = Cookie(default=None),
+) -> str | None:
+    '''
+    ## Contact with the company
+
+    This path operation contracts a person with the company.
+
+    Parameters:
+    - Request form parameters
+        - **first_name: str** -> [1..20] A first_name to contact.
+        - **last_name: str** -> [1..20] A last name to contact.
+        - **email: EmailStr** -> A email to contact.
+        - **message: str** -> [20..255] A message to contact.
+    - Request header parameters
+        - user_agent: str -> To watch the user information.
+    - Request cookie parameters
+        - ads: str -> To watch the user information.
+    
+    Returns the user agent.
+    '''
     return user_agent
 
-@app.post(path='/post-image', status_code=status.HTTP_200_OK, tags=['Files'])
+@app.post(
+    path='/post-image',
+    status_code=status.HTTP_200_OK,
+    tags=[Tags.files],
+    summary='Post a image in the app',
+)
 def post_image(image: UploadFile = File(
     default=...,
     title='Image file',
     description='Image file',
-)):
+)) -> dict[str, int]:
+    '''
+    ## Post a image
+
+    This path operation contracts a person with the company.
+
+    Parameters:
+    - Request form parameters
+        - **first_name: str** -> [1..20] A first_name to contact.
+        - **last_name: str** -> [1..20] A last name to contact.
+        - **email: EmailStr** -> A email to contact.
+        - **message: str** -> [20..255] A message to contact.
+    - Request header parameters
+        - user_agent: str -> To watch the user information.
+    - Request cookie parameters
+        - ads: str -> To watch the user information.
+    
+    Returns the user agent.
+    '''
     return {
         'filename': image.filename,
         'format': image.content_type,
