@@ -152,7 +152,7 @@ class LoginOut(LoginBase):
     )
 
 
-@app.get(path='/', status_code=status.HTTP_200_OK)
+@app.get(path='/', status_code=status.HTTP_200_OK, tags=['Home'])
 def home():
     return {'Hello': 'World'}
 
@@ -164,12 +164,13 @@ def home():
     # response_model_exclude={'password'}
     # Puedes usar las dos anteriores, pero en la documentación te indicará que devolverá la contraseña por el response_model de Person
     status_code=status.HTTP_201_CREATED,
+    tags=['Persons'] # Permite agrupar el endpoint en tags en la documentación
 )
 def create_person(person: Person = Body(...)) -> PersonOut:
     return person
 
 ''' Validations query parameters '''
-@app.get(path='/persons', status_code=status.HTTP_200_OK)
+@app.get(path='/persons', status_code=status.HTTP_200_OK, tags=['Persons'])
 def get_persons(
     name: Optional[str] = Query(
         default='Anonymous',
@@ -192,7 +193,11 @@ def get_persons(
 persons = [1, 2, 3, 4, 5]
 
 ''' Validations path parameters'''
-@app.get(path='/persons/{person_id}', status_code=status.HTTP_200_OK)
+@app.get(
+    path='/persons/{person_id}',
+    status_code=status.HTTP_200_OK,
+    tags=['Persons'],
+)
 def get_person(
     person_id: int = Path(
         default=...,
@@ -210,7 +215,11 @@ def get_person(
     return {person_id: 'It exists!'}
 
 ''' Validations request body and validations models '''
-@app.put(path='/persons/{person_id}', status_code=status.HTTP_200_OK)
+@app.put(
+    path='/persons/{person_id}',
+    status_code=status.HTTP_200_OK,
+    tags=['Persons'],
+)
 def update_person(
     person_id: int = Path(
         default=...,
@@ -232,6 +241,7 @@ def update_person(
     path='/login',
     response_model=LoginOut,
     status_code=status.HTTP_200_OK,
+    tags=['Persons']
 )
 def login(
     username: str = Form(
@@ -253,7 +263,7 @@ def login(
     return LoginOut(username=username)
 
 ''' Cookies and Headers parameters'''
-@app.post(path='/contact', status_code=status.HTTP_200_OK)
+@app.post(path='/contact', status_code=status.HTTP_200_OK, tags=['Contact'])
 def contact(
     first_name: str = Form(
         default=...,
@@ -278,7 +288,7 @@ def contact(
 ):
     return user_agent
 
-@app.post(path='/post-image')
+@app.post(path='/post-image', status_code=status.HTTP_200_OK, tags=['Files'])
 def post_image(image: UploadFile = File(
     default=...,
     title='Image file',
