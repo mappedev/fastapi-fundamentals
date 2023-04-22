@@ -6,7 +6,7 @@ from enum import Enum
 from pydantic import BaseModel, EmailStr, Field, HttpUrl, PaymentCardNumber
 
 ''' FastAPI imports '''
-from fastapi import Body, FastAPI, Form, Query, Path, status
+from fastapi import Body, Cookie, FastAPI, Form, Header, Query, Path, status
 
 app = FastAPI()
 
@@ -147,10 +147,7 @@ class LoginOut(LoginBase):
     )
 
 
-@app.get(
-    path='/',
-    status_code=status.HTTP_200_OK,
-)
+@app.get(path='/', status_code=status.HTTP_200_OK)
 def home():
     return {'Hello': 'World'}
 
@@ -167,10 +164,7 @@ def create_person(person: Person = Body(...)) -> PersonOut:
     return person
 
 ''' Validations query parameters '''
-@app.get(
-    path='/persons',
-    status_code=status.HTTP_200_OK,
-)
+@app.get(path='/persons', status_code=status.HTTP_200_OK)
 def get_persons(
     name: Optional[str] = Query(
         default='Anonymous',
@@ -191,10 +185,7 @@ def get_persons(
     return {name: age}
 
 ''' Validations path parameters'''
-@app.get(
-    path='/persons/{person_id}',
-    status_code=status.HTTP_200_OK,
-)
+@app.get(path='/persons/{person_id}', status_code=status.HTTP_200_OK)
 def get_person(
     person_id: int = Path(
         default=...,
@@ -207,10 +198,7 @@ def get_person(
     return {person_id: 'It exists!'}
 
 ''' Validations request body and validations models '''
-@app.put(
-    path='/persons/{person_id}',
-    status_code=status.HTTP_200_OK,
-)
+@app.put(path='/persons/{person_id}', status_code=status.HTTP_200_OK)
 def update_person(
     person_id: int = Path(
         default=...,
@@ -227,6 +215,7 @@ def update_person(
     results.update(location.dict())
     return results
 
+''' Form Data parameters '''
 @app.post(
     path='/login',
     response_model=LoginOut,
@@ -250,3 +239,29 @@ def login(
     )
 ):
     return LoginOut(username=username)
+
+''' Cookies and Headers parameters'''
+@app.post(path='/contact', status_code=status.HTTP_200_OK)
+def contact(
+    first_name: str = Form(
+        default=...,
+        max_length=20,
+        min_length=1,
+        title='First name',
+        description='First name (Mario)',
+        example='Mario',
+    ),
+    last_name: str = Form(
+        default=...,
+        max_length=20,
+        min_length=1,
+        title='Last name',
+        description='Last name (Peña)',
+        example='Peña',
+    ),
+    email: EmailStr = Form(default=...),
+    message: str = Form(default=..., min_length=20),
+    user_agent: Optional[str] = Header(default=None),
+    ads: Optional[str] = Cookie(default=None),
+):
+    return user_agent
